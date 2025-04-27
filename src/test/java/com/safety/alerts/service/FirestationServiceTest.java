@@ -1,0 +1,97 @@
+package com.safety.alerts.service;
+
+import com.safetynet.alerts.model.Firestation;
+import com.safetynet.alerts.repository.FirestationRepository;
+import com.safetynet.alerts.service.FirestationService;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class FirestationServiceTest {
+
+    @Mock
+    private FirestationRepository firestationRepository;
+
+    @InjectMocks
+    private FirestationService firestationService;
+
+    private Firestation firestation;
+
+    @BeforeEach
+    void setUp() {
+        firestation = new Firestation();
+        firestation.setId(1L);
+        firestation.setAddress("123 Main St");
+        firestation.setStation(1);
+
+        // 🔥 Réinitialisation des mocks avant chaque test
+        Mockito.reset(firestationRepository);
+    }
+
+    @Test
+    void testGetAllFirestations() {
+        List<Firestation> firestations = Arrays.asList(firestation);
+        when(firestationRepository.findAll()).thenReturn(firestations);
+
+        List<Firestation> result = firestationService.getAllFirestations();
+
+        assertNotNull(result);
+        assertFalse(result.isEmpty()); // Vérifie que la liste n'est pas vide
+        assertEquals(1, result.size());
+        verify(firestationRepository, times(1)).findAll();
+    }
+
+    @Test
+    void testGetFirestationById_Found() {
+        when(firestationRepository.findById(1L)).thenReturn(Optional.of(firestation));
+
+        Optional<Firestation> result = firestationService.getFirestationById(1L);
+
+        assertTrue(result.isPresent());
+        assertEquals(1L, result.get().getId());
+        verify(firestationRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testGetFirestationById_NotFound() {
+        when(firestationRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Optional<Firestation> result = firestationService.getFirestationById(1L);
+
+        assertFalse(result.isPresent());
+        verify(firestationRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void testSaveFirestation() {
+        when(firestationRepository.save(any(Firestation.class))).thenReturn(firestation);
+
+        Firestation result = firestationService.saveFirestation(firestation);
+
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        verify(firestationRepository, times(1)).save(firestation);
+    }
+
+    @Test
+    void testDeleteFirestation() {
+        doNothing().when(firestationRepository).deleteById(1L);
+
+        firestationService.deleteFirestation(1L);
+
+        verify(firestationRepository, times(1)).deleteById(1L);
+    }
+}
