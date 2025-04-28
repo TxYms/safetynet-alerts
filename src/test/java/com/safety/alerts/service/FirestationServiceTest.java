@@ -94,4 +94,52 @@ class FirestationServiceTest {
 
         verify(firestationRepository, times(1)).deleteById(1L);
     }
+    
+    @Test
+    void testDeleteFirestation_Exception() {
+        doThrow(new RuntimeException("Deletion failed")).when(firestationRepository).deleteById(1L);
+
+        assertThrows(RuntimeException.class, () -> firestationService.deleteFirestation(1L));
+
+        verify(firestationRepository, times(1)).deleteById(1L);
+    }
+    
+    @Test
+    void testGetAllFirestations_EmptyList() {
+        when(firestationRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<Firestation> result = firestationService.getAllFirestations();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(firestationRepository, times(1)).findAll();
+    }
+    
+    @Test
+    void testSaveNewFirestation() {
+        Firestation newFirestation = new Firestation();
+        newFirestation.setId(2L);
+        newFirestation.setAddress("456 Elm St");
+        newFirestation.setStation(2);
+
+        when(firestationRepository.save(any(Firestation.class))).thenReturn(newFirestation);
+
+        Firestation result = firestationService.saveFirestation(newFirestation);
+
+        assertNotNull(result);
+        assertEquals(2L, result.getId());
+        assertEquals("456 Elm St", result.getAddress());
+        verify(firestationRepository, times(1)).save(newFirestation);
+    }
+    
+    @Test
+    void testGetFirestationById_NullId() {
+        when(firestationRepository.findById(null)).thenThrow(new IllegalArgumentException("ID cannot be null"));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            firestationService.getFirestationById(null);
+        });
+
+        verify(firestationRepository, times(1)).findById(null);
+    }
 }

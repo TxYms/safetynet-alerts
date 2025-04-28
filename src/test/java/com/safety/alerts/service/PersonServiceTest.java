@@ -95,4 +95,54 @@ class PersonServiceTest {
 
         verify(personRepository, times(1)).deleteById(1L);
     }
+    
+    @Test
+    void testDeletePerson_Exception() {
+        doThrow(new RuntimeException("Deletion failed")).when(personRepository).deleteById(1L);
+
+        assertThrows(RuntimeException.class, () -> personService.deletePerson(1L));
+
+        verify(personRepository, times(1)).deleteById(1L);
+    }
+    
+    @Test
+    void testGetAllPersons_EmptyList() {
+        when(personRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<Person> result = personService.getAllPersons();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(personRepository, times(1)).findAll();
+    }
+    
+    
+    @Test
+    void testSaveNewPerson() {
+        Person newPerson = new Person();
+        newPerson.setId(2L);
+        newPerson.setFirstName("John");
+        newPerson.setLastName("Smith");
+        newPerson.setAddress("456 Elm St");
+
+        when(personRepository.save(any(Person.class))).thenReturn(newPerson);
+
+        Person result = personService.savePerson(newPerson);
+
+        assertNotNull(result);
+        assertEquals(2L, result.getId());
+        assertEquals("John", result.getFirstName());
+        verify(personRepository, times(1)).save(newPerson);
+    }
+    
+    @Test
+    void testGetPersonById_NullId() {
+        when(personRepository.findById(null)).thenThrow(new IllegalArgumentException("ID cannot be null"));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            personService.getPersonById(null);
+        });
+
+        verify(personRepository, times(1)).findById(null);
+    }
 }

@@ -95,4 +95,53 @@ class MedicalRecordServiceTest {
 
         verify(medicalRecordRepository, times(1)).deleteById(1L);
     }
+    
+    @Test
+    void testDeleteMedicalRecord_Exception() {
+        doThrow(new RuntimeException("Deletion failed")).when(medicalRecordRepository).deleteById(1L);
+
+        assertThrows(RuntimeException.class, () -> medicalRecordService.deleteMedicalRecord(1L));
+
+        verify(medicalRecordRepository, times(1)).deleteById(1L);
+    }
+    
+    @Test
+    void testGetAllMedicalRecords_EmptyList() {
+        when(medicalRecordRepository.findAll()).thenReturn(Arrays.asList());
+
+        List<MedicalRecord> result = medicalRecordService.getAllMedicalRecords();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(medicalRecordRepository, times(1)).findAll();
+    }
+    
+    @Test
+    void testSaveNewMedicalRecord() {
+        MedicalRecord newMedicalRecord = new MedicalRecord();
+        newMedicalRecord.setId(2L);
+        newMedicalRecord.setFirstName("Jane");
+        newMedicalRecord.setLastName("Smith");
+        newMedicalRecord.setBirthdate("02/02/1990");
+
+        when(medicalRecordRepository.save(any(MedicalRecord.class))).thenReturn(newMedicalRecord);
+
+        MedicalRecord result = medicalRecordService.saveMedicalRecord(newMedicalRecord);
+
+        assertNotNull(result);
+        assertEquals(2L, result.getId());
+        assertEquals("Jane", result.getFirstName());
+        verify(medicalRecordRepository, times(1)).save(newMedicalRecord);
+    }
+    
+    @Test
+    void testGetMedicalRecordById_NullId() {
+        when(medicalRecordRepository.findById(null)).thenThrow(new IllegalArgumentException("ID cannot be null"));
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            medicalRecordService.getMedicalRecordById(null);
+        });
+
+        verify(medicalRecordRepository, times(1)).findById(null);
+    }
 }

@@ -2,6 +2,7 @@ package com.safetynet.alerts.model;
 
 import jakarta.persistence.*;
 
+// Represente une caserne de pompier dans l'application
 @Entity
 public class Firestation {
     @Id
@@ -10,6 +11,7 @@ public class Firestation {
     private String address;
     private int station;
 
+    // Constructeur vide requis pas JPA
     public Firestation() {
     }
 
