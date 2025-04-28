@@ -13,7 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -97,5 +99,25 @@ class FirestationControllerTest {
 
         assertEquals(204, response.getStatusCode().value());
         verify(firestationService, times(1)).deleteFirestation(1L);
+    }
+    
+    @Test
+    void testGetPersonsCoveredByStation() {
+        Map<String, Object> personData = new HashMap<>();
+        personData.put("address", "123 Main St");
+        personData.put("station", 1);
+
+        List<Map<String, Object>> personsCovered = Arrays.asList(personData);
+
+        when(firestationService.getPersonsCoveredByStation(1)).thenReturn(personsCovered);
+
+        ResponseEntity<List<Map<String, Object>>> response = firestationController.getPersonsCoveredByStation(1);
+
+        assertNotNull(response.getBody());
+        assertEquals(200, response.getStatusCode().value());
+        assertEquals(1, response.getBody().size());
+        assertEquals("123 Main St", response.getBody().get(0).get("address"));
+        assertEquals(1, response.getBody().get(0).get("station"));
+        verify(firestationService, times(1)).getPersonsCoveredByStation(1);
     }
 }

@@ -1,6 +1,10 @@
 package com.safety.alerts.service;
 
+import com.safetynet.alerts.model.Firestation;
+import com.safetynet.alerts.model.MedicalRecord;
 import com.safetynet.alerts.model.Person;
+import com.safetynet.alerts.repository.FirestationRepository;
+import com.safetynet.alerts.repository.MedicalRecordRepository;
 import com.safetynet.alerts.repository.PersonRepository;
 import com.safetynet.alerts.service.PersonService;
 
@@ -14,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -24,6 +29,12 @@ class PersonServiceTest {
 
     @Mock
     private PersonRepository personRepository;
+    
+    @Mock
+    private MedicalRecordRepository medicalRecordRepository;
+    
+    @Mock
+    private FirestationRepository firestationRepository;
 
     @InjectMocks
     private PersonService personService;
@@ -144,5 +155,164 @@ class PersonServiceTest {
         });
 
         verify(personRepository, times(1)).findById(null);
+    }
+    
+    @Test
+    void testGetChildrenByAddress() {
+        Person child = new Person();
+        child.setId(1L);
+        child.setFirstName("John");
+        child.setLastName("Doe");
+        child.setAddress("123 Main St");
+
+        MedicalRecord record = new MedicalRecord();
+        record.setBirthdate("01/01/2015"); // 10 ans
+
+        when(personRepository.findAll()).thenReturn(List.of(child));
+        when(medicalRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+
+        List<Map<String, Object>> result = personService.getChildrenByAddress("123 Main St");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("John", result.get(0).get("firstName"));
+        assertEquals("Doe", result.get(0).get("lastName"));
+        verify(personRepository, times(1)).findAll();
+        verify(medicalRecordRepository, times(1)).findById(1L);
+    }
+    
+    @Test
+    void testGetPhoneNumbersByStation() {
+        Firestation firestation = new Firestation();
+        firestation.setAddress("123 Main St");
+        firestation.setStation(1);
+
+        Person person = new Person();
+        person.setPhone("123-456-7890");
+        person.setAddress("123 Main St");
+
+        when(firestationRepository.findAll()).thenReturn(List.of(firestation));
+        when(personRepository.findAll()).thenReturn(List.of(person));
+
+        List<Map<String, Object>> result = personService.getPhoneNumbersByStation(1);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("123-456-7890", result.get(0).get("phone"));
+        verify(firestationRepository, times(1)).findAll();
+        verify(personRepository, times(1)).findAll();
+    }
+    
+    @Test
+    void testGetPersonsAndStationByAddress() {
+        Firestation firestation = new Firestation();
+        firestation.setAddress("123 Main St");
+        firestation.setStation(1);
+
+        Person person = new Person();
+        person.setId(1L);
+        person.setLastName("Doe");
+        person.setPhone("123-456-7890");
+        person.setAddress("123 Main St");
+
+        MedicalRecord record = new MedicalRecord();
+        record.setBirthdate("01/01/1990"); // 34 ans
+        record.setMedications(List.of("aznol:350mg"));
+        record.setAllergies(List.of("nillacilan"));
+
+        when(firestationRepository.findAll()).thenReturn(List.of(firestation));
+        when(personRepository.findAll()).thenReturn(List.of(person));
+        when(medicalRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+
+        List<Map<String, Object>> result = personService.getPersonsAndStationByAddress("123 Main St");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Doe", result.get(0).get("lastName"));
+        assertEquals("123-456-7890", result.get(0).get("phone"));
+        assertEquals(1, result.get(0).get("stationNumber"));
+        verify(firestationRepository, times(1)).findAll();
+        verify(personRepository, times(1)).findAll();
+        verify(medicalRecordRepository, times(1)).findById(1L);
+    }
+    
+    @Test
+    void testGetHouseholdsByStations() {
+        Firestation firestation = new Firestation();
+        firestation.setAddress("123 Main St");
+        firestation.setStation(1);
+
+        Person person = new Person();
+        person.setId(1L);
+        person.setLastName("Doe");
+        person.setPhone("123-456-7890");
+        person.setAddress("123 Main St");
+
+        MedicalRecord record = new MedicalRecord();
+        record.setBirthdate("01/01/1990");
+        record.setMedications(List.of("aznol:350mg"));
+        record.setAllergies(List.of("nillacilan"));
+
+        when(firestationRepository.findAll()).thenReturn(List.of(firestation));
+        when(personRepository.findAll()).thenReturn(List.of(person));
+        when(medicalRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+
+        Map<String, List<Map<String, Object>>> result = personService.getHouseholdsByStations(List.of(1));
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertTrue(result.containsKey("123 Main St"));
+        assertEquals("Doe", result.get("123 Main St").get(0).get("lastName"));
+        verify(firestationRepository, times(1)).findAll();
+        verify(personRepository, times(1)).findAll();
+        verify(medicalRecordRepository, times(1)).findById(1L);
+    }
+    
+    @Test
+    void testGetPersonInfoByLastName() {
+        Person person = new Person();
+        person.setId(1L);
+        person.setFirstName("John");
+        person.setLastName("Doe");
+        person.setAddress("123 Main St");
+        person.setEmail("john.doe@example.com");
+
+        MedicalRecord record = new MedicalRecord();
+        record.setBirthdate("01/01/1990");
+        record.setMedications(List.of("aznol:350mg"));
+        record.setAllergies(List.of("nillacilan"));
+
+        when(personRepository.findAll()).thenReturn(List.of(person));
+        when(medicalRecordRepository.findById(1L)).thenReturn(Optional.of(record));
+
+        List<Map<String, Object>> result = personService.getPersonInfoByLastName("Doe");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("Doe", result.get(0).get("lastName"));
+        assertEquals("123 Main St", result.get(0).get("address"));
+        assertEquals("john.doe@example.com", result.get(0).get("email"));
+        verify(personRepository, times(1)).findAll();
+        verify(medicalRecordRepository, times(1)).findById(1L);
+    }
+    
+    @Test
+    void testGetCommunityEmailsByCity() {
+        Person person = new Person();
+        person.setId(1L);
+        person.setFirstName("John");
+        person.setLastName("Doe");
+        person.setAddress("123 Main St");
+        person.setCity("Springfield");
+        person.setEmail("john.doe@example.com");
+
+        when(personRepository.findAll()).thenReturn(List.of(person));
+
+        List<Map<String, Object>> result = personService.getCommunityEmailsByCity("Springfield");
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("john.doe@example.com", result.get(0).get("email"));
+        verify(personRepository, times(1)).findAll();
     }
 }

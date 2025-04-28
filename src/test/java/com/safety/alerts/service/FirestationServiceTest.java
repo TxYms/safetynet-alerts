@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -141,5 +142,32 @@ class FirestationServiceTest {
         });
 
         verify(firestationRepository, times(1)).findById(null);
+    }
+    
+    @Test
+    void testGetPersonsCoveredByStation() {
+        // Création d'un mock de la Firestation
+        Firestation firestation1 = new Firestation();
+        firestation1.setId(1L);
+        firestation1.setAddress("123 Main St");
+        firestation1.setStation(1);
+
+        Firestation firestation2 = new Firestation();
+        firestation2.setId(2L);
+        firestation2.setAddress("456 Elm St");
+        firestation2.setStation(2);
+
+        // Simulation du repository
+        when(firestationRepository.findAll()).thenReturn(Arrays.asList(firestation1, firestation2));
+
+        // Appel de la méthode réelle
+        List<Map<String, Object>> result = firestationService.getPersonsCoveredByStation(1);
+
+        // Vérifications
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("123 Main St", result.get(0).get("address"));
+        assertEquals(1, result.get(0).get("station"));
+        verify(firestationRepository, times(1)).findAll();
     }
 }
