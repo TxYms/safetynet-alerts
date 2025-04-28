@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -48,5 +49,12 @@ public class FirestationController {
         logger.info("DELETE /firestations/{}", id);
         firestationService.deleteFirestation(id);
         return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/firestation")
+    public ResponseEntity<List<Map<String, Object>>> getPersonsCoveredByStation(@RequestParam int stationNumber) {
+        logger.info("GET /firestation?stationNumber={}", stationNumber);
+        List<Map<String, Object>> response = firestationService.getPersonsCoveredByStation(stationNumber);
+        return ResponseEntity.ok(response);
     }
 }

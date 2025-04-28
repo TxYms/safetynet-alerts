@@ -6,8 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class FirestationService {
@@ -69,5 +73,22 @@ public class FirestationService {
             logger.error("Error deleting firestation with id {}: {}", id, e.getMessage(), e);
             throw e;
         }
+    }
+
+    public List<Map<String, Object>> getPersonsCoveredByStation(int stationNumber) {
+        List<Firestation> firestations = firestationRepository.findAll().stream()
+                .filter(f -> f.getStation() == stationNumber)
+                .collect(Collectors.toList());
+
+        List<Map<String, Object>> personsInfo = new ArrayList<>();
+
+        for (Firestation firestation : firestations) {
+            Map<String, Object> personData = new HashMap<>();
+            personData.put("address", firestation.getAddress());
+            personData.put("station", firestation.getStation());
+            personsInfo.add(personData);
+        }
+
+        return personsInfo;
     }
 }
